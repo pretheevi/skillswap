@@ -1,8 +1,9 @@
 import React,{ useState } from "react";
 import { useNavigate } from "react-router-dom";
+import API from "../../axios/axios";
 import "./postcard.css";
 
-function Postcard({post, showManageActions, showPostUserDetails}) {
+function Postcard({post, showManageActions, showPostUserDetails, getAllPosts}) {
   const navigate = useNavigate();
   const [expandedComments, setExpandedComments] = useState({});
 
