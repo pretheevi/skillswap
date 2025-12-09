@@ -1,51 +1,54 @@
-// CreatePost.jsx
-import React, { useState } from "react";
-import API from "../axios/axios";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import API from "../../../axios/axios";
 
-export default function CreatePost() {
+export default function EditPost() {
   const navigate = useNavigate();
-  const initialState = {
-    title: "",
-    description: "",
-    category: "web",
-    level: "beginner",
-  };
-  const [formData, setFormData] = useState(initialState);
-
+  const location = useLocation();
+  const { post } = location.state; 
+  const [formData, setFormData] = useState({
+    title: post?.title || "",
+    description: post?.description || "",
+    category: post?.category || "web",
+    level: post?.level || "beginner",
+  });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleSave = async () => {
+    console.log("Saving post:", formData);
+    try{
+      const respons = await API.put(`/skills/${post._id}`, formData);
+      if(respons.status === 200) {
+        setFormData(prev => {
+          prev.title = "",
+          prev.description = "",
+          prev.level = "",
+          prev.category = ""
+        });
+      }
+      navigate("/profile");
+      console.log(respons);
+    } catch(error) {
+      console.log(error);
+    }
+  };
+
   const handleCancel = () => {
-    console.log("Cancelled");
-    setFormData(initialState);
+    console.log("Cancelled edit");
     navigate('/profile')
   };
 
-  const handleSave = async () => {
-  const user = JSON.parse(localStorage.getItem("user"));
-  if (!user?._id) return alert("User not found!");
-
-  const postData = { ...formData, user: user._id };
-
-  try {
-    const res = await API.post("/skills", postData);
-    console.log("Post created:", res.data);
-    setFormData(initialState);
-    navigate('/profile')
-  } catch (err) {
-    console.error(err);
-    alert("Error creating post!");
-  }
-};
-
+  useEffect(() => {
+    console.log(post)
+  })
 
   return (
     <div style={styles.container}>
-      <h2 style={styles.title}>Create Post</h2>
+      <h2 style={styles.title}>Edit Post</h2>
       <input
         name="title"
         placeholder="Title"
@@ -77,15 +80,12 @@ export default function CreatePost() {
       </div>
       <div style={styles.buttonRow}>
         <button style={styles.cancelBtn} onClick={handleCancel}>Cancel</button>
-        <button  
-          style={{...styles.saveBtn, opacity: !formData.title.trim() ? 0.5 : 1, cursor: !formData.title.trim() ? "not-allowed" : "pointer"}} 
-          disabled={!formData.title.trim()} onClick={handleSave}>Save</button>
+        <button style={styles.saveBtn} onClick={handleSave}>Save</button>
       </div>
     </div>
   );
 }
 
-// createPostStyles.js
 export const styles = {
   container: {
     maxWidth: "500px",
@@ -104,15 +104,6 @@ export const styles = {
   select: { flex: 1, padding: "10px", borderRadius: "4px", border: "1px solid #ccc" },
   row: { display: "flex", gap: "10px" },
   buttonRow: { display: "flex", gap: "10px" },
-  saveBtn: {
-    flex: 1,
-    padding: "10px",
-    background: "#3498db",
-    color: "#fff",
-    border: "none",
-    borderRadius: "4px",
-    cursor: "pointer",
-    opacity: 1,
-  },
+  saveBtn: { flex: 1, padding: "10px", background: "#3498db", color: "#fff", border: "none", borderRadius: "4px", cursor: "pointer" },
   cancelBtn: { flex: 1, padding: "10px", background: "#e74c3c", color: "#fff", border: "none", borderRadius: "4px", cursor: "pointer" },
 };

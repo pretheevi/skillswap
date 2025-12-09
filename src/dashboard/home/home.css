@@ -1,0 +1,136 @@
+/* home.css */
+
+.bg-container {
+  background-color: #f5f7fa;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  display: flex;
+}
+
+/* ========== PUBLIC FEED STYLES ========== */
+.public-feed {
+  flex: 1;
+  height: 100vh;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  overflow-y: auto;
+  background-color: #f5f7fa;
+}
+
+/* Search */
+.search {
+  width: 100%;
+  max-width: 800px;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding: 0 10px;
+}
+
+.search input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 1px solid #e1e8ed;
+  border-radius: 8px;
+  font-size: 1rem;
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+.search input:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+.search input::placeholder {
+  color: #95a5a6;
+}
+
+.search-button {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 20px;
+  cursor: pointer;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.search-button:hover {
+  background-color: #2980b9;
+}
+
+/* Loading and No Posts */
+.loading, .no-posts {
+  text-align: center;
+  color: #7f8c8d;
+  padding: 60px 20px;
+  font-size: 1.2rem;
+  width: 100%;
+  max-width: 600px;
+}
+
+/* ========== RESPONSIVE STYLES ========== */
+
+/* Mobile Styles (≤ 767px) */
+@media (max-width: 767px) {
+  .bg-container {
+    flex-direction: column;
+  }
+  
+  .public-feed {
+    padding: 15px;
+    height: calc(100vh - 70px); /* Account for navbar height */
+  }
+  
+  .search {
+    margin-bottom: 15px;
+  }
+  
+  .search input {
+    max-width: 100%;
+  }
+}
+
+/* Tablet Styles (768px - 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .public-feed {
+    padding: 25px;
+  }
+}
+
+/* Desktop Styles (≥ 768px) */
+@media (min-width: 768px) {
+  .bg-container {
+    flex-direction: row;
+  }
+  
+  .public-feed {
+    padding: 30px;
+  }
+}
+
+/* Large Desktop Styles (≥ 1200px) */
+@media (min-width: 1200px) {
+  .public-feed {
+    padding: 40px;
+  }
+  
+  .search {
+    max-width: 900px;
+  }
+}

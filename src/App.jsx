@@ -1,11 +1,12 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Login from "./authentication/login.jsx";
 import Register from "./authentication/register.jsx";
-import Home from "./dashboard/home.jsx";
-import Profile from "./dashboard/profile.jsx";
-import EditPost from "./dashboard/editPost.jsx";
-import CreatePost from "./dashboard/createpost.jsx";
-import CommentPage from "./dashboard/addcomment.jsx";
+import Home from "./dashboard/home/home.jsx";
+import Profile from "./dashboard/profile/profile.jsx";
+import EditPost from "./dashboard/profile/editpost/editPost.jsx";
+import CreatePost from "./dashboard/profile/createpost/createpost.jsx";
+import CommentPage from "./dashboard/comment/addcomment.jsx";
 // import 'bootstrap/dist/css/bootstrap.min.css';
 
 function App() {

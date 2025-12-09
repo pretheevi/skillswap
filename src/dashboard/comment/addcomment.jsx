@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import API from "../axios/axios";
+import API from "../../axios/axios";
 
 export default function CommentPage() {
   const { postId } = useParams();
