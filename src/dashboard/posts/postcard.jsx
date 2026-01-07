@@ -1,160 +1,136 @@
-import React,{ useState } from "react";
-import { useNavigate } from "react-router-dom";
-import API from "../../axios/axios";
-import "./postcard.css";
+import React, { useEffect, useState } from 'react';
+import { Await, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import API from '../../axios/axios';
+import './postCard.css';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faHeart, faXmark, faArrowLeft, faChevronLeft, faEllipsisV } from "@fortawesome/free-solid-svg-icons";
+import { faHeart as faHeartRegular, faComment } from "@fortawesome/free-regular-svg-icons";
 
-function Postcard({post, showManageActions, showPostUserDetails, getAllPosts}) {
+import Skill_SM from '../profile/viewSkill/Skill_SM';
+import Skill_MD from '../profile/viewSkill/Skill_MD';
+
+const PostCard = ({ post, profilePost, deletePost }) => {
   const navigate = useNavigate();
-  const [expandedComments, setExpandedComments] = useState({});
+  const [image, setImage] = useState(null);
+  const [profileImage, setProfileImage] = useState(null);
+  const [showComments, setShowComments] = useState(false);
+  const { user_id, user_name, user_email, user_avatar, skill_id, skill_title, skill_description, skill_level, skill_category, media, rating, comment_count } = post;
+  const [comments, setComments] = useState([]);
+  const [commentLoading, setCommentLoading] = useState(false);
+  const [postCancel, setPostCancel] = useState(false);
 
-  // Delete API
-  const deletePost = async (_id) => {
-    const confirmDelete = window.confirm("Are you sure you want to delete this post?");
-    if (!confirmDelete) return;
-    try {
-      const response = await API.delete(`/skills/${_id}`);
-      if (response.status === 200) {
-        getAllPosts();
+  const getSkillImage = async (media_url) => {
+    const response = await axios.get(`http://localhost:8080${media_url}`, { responseType: 'blob' });
+    const imageBlob = response.data;
+    const imageObjectURL = URL.createObjectURL(imageBlob);
+    setImage(imageObjectURL);
+  }
+
+  const getProfileImage = async (media_url) => {
+    const response = await axios.get(`http://localhost:8080${media_url}`, { responseType: 'blob' });
+    const imageBlob = response.data;
+    const imageObjectURL = URL.createObjectURL(imageBlob);
+    return imageObjectURL;
+  }
+
+  useEffect(() => {
+    if (!profilePost) {
+      const fetchAuthorAvatar = async () => {
+        const postAvatar = await getProfileImage(user_avatar);
+        setProfileImage(postAvatar);
       }
-    } catch (error) {
-      console.log(error);
+      fetchAuthorAvatar();
     }
-  };
+    getSkillImage(media[0].media_url);
+  }, [])
 
-  const toggleComments = (postId) => {
-  setExpandedComments(prev => ({
-      ...prev,
-      [postId]: !prev[postId]
-    }));
-  };
+
+  const fetchComments = async () => {
+    try {
+      setCommentLoading(true);
+      const response = await API.get(`/comments/${skill_id}`);
+      setCommentLoading(false);
+      setComments(response.data);
+      console.log(skill_id)
+    } catch (error) {
+      setCommentLoading(false);
+      console.error('Error fetching comments:', error);
+    }
+  }
+
+
+  const toggleShowComments = () => {
+    if (showComments === false) {
+      fetchComments();
+      setShowComments(true);
+    } else {
+      setShowComments(false);
+    }
+  }
+
+  const SKILL_MAX_DESCRIPTION = 80;
+  const [descriptionExpanded, setDescriptionExpanded] = useState(false);
+  const isDescriptionLong = skill_description?.length > SKILL_MAX_DESCRIPTION;
+  const toogleDescriptionExpand = (id) => {
+    setDescriptionExpanded(prev => !prev)
+  }
 
   return (
-    <article className="prof-post-card" key={post._id}>
-      {showPostUserDetails && <div className="post-user-details">
-        <div className="post-user-avatar">
-          {post.user?.email?.charAt(0).toUpperCase() || "U"}
-        </div>
-        <div className="post-meta">
-          <div className="post-user">{post.user?.email || "Anonymous"}</div>
-          <div className="post-date">
-            {new Date(post.createdAt).toLocaleDateString()}
+    <>
+      <article
+        key={skill_id}
+        className={`${profilePost ? 'border border-neutral-700' : 'w-full md:w-md lg:w-lg xl:w-xl mx-auto mb-6'}`}
+        onClick={() => {
+          if (profilePost) {
+            setShowComments(true);
+          }
+        }}
+      >
+        <header className={`${profilePost ? '' : 'header-container ps-4'}`}>
+          <img src={profileImage} alt="prf-pic" className={`${profilePost ? 'hidden' : ''} flex-none`} />
+          <div className={`flex justify-between ${profilePost ? '' : ''} flex-1`}>
+            <div className={`${profilePost ? '' : ''}`}>
+              <p className={`${profilePost ? 'hidden' : ''}`}>{user_name}</p>
+            </div>
           </div>
+        </header>
+        {image && <div className={`post-image-container ${profilePost ? 'h-28 md:h-33 lg:h-40 xl:h-48 mb-2' : 'max-h-[850px]'}`}>
+          <img src={image} alt="post-media" />
+        </div>}
+        <div className='like-comment-container my-4'>
+          <span className={`${profilePost ? '' : 'cursor-pointer'} text-white`}>
+            <FontAwesomeIcon icon={faHeartRegular} />
+            {rating && <p>{rating}</p>}
+          </span>
+          <span className={`${profilePost ? '' : 'cursor-pointer'}`} onClick={() => !profilePost && toggleShowComments()}>
+            <FontAwesomeIcon icon={faComment} />
+            <p>{comment_count}</p>
+          </span>
         </div>
+        <div className={`description-container ${profilePost ? 'hidden' : ''}`}>
+          <p>
+            {descriptionExpanded || !isDescriptionLong
+              ? skill_description
+              : skill_description.slice(0, SKILL_MAX_DESCRIPTION)}
+            {isDescriptionLong && (
+              <span onClick={() => toogleDescriptionExpand()}>
+                {descriptionExpanded ? "...Less" : "...More"}
+              </span>
+            )}
+          </p>
+        </div>
+      </article>
+      
+      {showComments && <div className='fixed bg-neutral-950 top-0 left-0 z-50 w-full h-screen md:hidden'>
+          <Skill_SM skill_id={skill_id} setShowSkill={setShowComments} profilePost={profilePost} deletePost={deletePost} />
       </div>}
+            
+      {showComments && <div className='Skill_MD fixed bg-neutral-950 top-0 left-0 z-50 w-full h-screen'>
+          <Skill_MD skill_id={skill_id} setShowSkill={setShowComments} profilePost={profilePost} deletePost={deletePost} />
+      </div>}
+    </>
+  );
+};
 
-      {/* Post Header */}
-      <div className="post-header">
-        <div className="post-category">{post.category}</div>
-        <div className="post-date">
-          {new Date(post.createdAt).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric'
-          })}
-        </div>
-      </div>
-
-      {/* Post Content */}
-      <div className="post-content">
-        <h3 className="post-title">{post.title}</h3>
-        <p className="post-description">{post.description}</p>
-        
-        <div className="post-meta">
-          <span className="meta-item">
-            <span className="meta-label">Level:</span>
-            <span className="meta-value">{post.level}</span>
-          </span>
-          <span className="meta-item">
-            <span className="meta-label">Rating:</span>
-            <span className="meta-value">
-              {"⭐".repeat(Math.min(Math.max(post.rating, 0), 5))}
-              {post.rating > 0 && ` (${post.rating})`}
-            </span>
-          </span>
-        </div>
-      </div>
-
-      {/* Post Actions */}
-      <div className="post-actions">
-        { showManageActions ? (
-        <>
-          <button 
-            className="action-btn edit-btn"
-            onClick={() => navigate(`/editpost/${post._id}`, { state: { post } })}
-          >
-            Edit
-          </button>
-          <button 
-            className="action-btn delete-btn"
-            onClick={() => deletePost(post._id)}
-          >
-            Delete
-          </button>
-          <button 
-            className="action-btn comments-btn"
-            onClick={() => toggleComments(post._id)}
-          >
-            {post.comments?.length || 0} Comments
-          </button>
-        </>
-        ) : (
-        <>
-          <button className="action-btn like-btn">
-            👍 Like
-          </button>
-          <button 
-            className="action-btn comments-btn"
-            onClick={() => toggleComments(post._id)}
-          >
-            💬 {post.comments?.length || 0} Comments
-          </button>
-          <button 
-            className="action-btn add-comment-btn"
-            onClick={() => navigate(`/comment/${post._id}`)}
-          >
-            ➕ Add Comment
-          </button>
-        </>
-        )}
-
-      </div>
-
-      {/* Comments Section */}
-      {expandedComments[post._id] && (
-        <div className="comments-section expanded">
-          <h4 className="comments-title">
-            Comments ({post.comments?.length || 0})
-          </h4>
-          
-          {post.comments && post.comments.length > 0 ? (
-            <div className="comments-list">
-              {post.comments.map((comment, index) => (
-                <div className="comment-item" key={index}>
-                  <div className="comment-header">
-                    <div className="comment-avatar">
-                      {comment.user?.email?.charAt(0).toUpperCase() || "U"}
-                    </div>
-                    <div className="comment-info">
-                      <span className="comment-user">
-                        {comment.user?.email || "Anonymous"}
-                      </span>
-                      <span className="comment-date">
-                        {new Date(comment.createdAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
-                  <p className="comment-text">{comment.text}</p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="no-comments">
-              <p>No comments yet. Be the first to comment!</p>
-            </div>
-          )}
-        </div>
-      )}
-    </article>
-  )
-}
-
-export default Postcard;
+export default PostCard;

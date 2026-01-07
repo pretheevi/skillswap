@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import API from '../axios/axios'
-
 import './authentication.css';
+
 function Login() {
   const navigate = useNavigate();
   const [form, setFrom] = useState({email: "", password: ""});
@@ -28,10 +29,11 @@ function Login() {
   const inputChange = (event) => {
     const {name, value} = event.target;
     setError(prev => ({...prev, [name]:false}));
-    setFrom(prev => ({...prev, [name]:value}));
+    setFrom(prev => ({...prev, [name]:value.trim()}));
   } 
   const loginSubmit = async () => {
     try{
+      setError({email: false, password: false});
       setLoading(true);
       if(!validateForm(form)) {
         throw new Error('invalid inputs');
@@ -47,40 +49,79 @@ function Login() {
     } catch(error) {
       console.log(error)
       setLoading(false);
+      toast.error(error.response.data.error)
+    }
+  }
+  
+  const handleOnBlurError = (event) => {
+    if(event.target.value.length === 0) {
+      setError(prev => ({...prev, [event.target.name]: true}));
     }
   }
 
-  return (
-    <>
-      <div className="auth-bg-container">
-        <div className="auth-content-card">
-          <h1 className='auth-heading'>Login</h1>
-          <div className='auth-form-field'>
-            <label htmlFor="email">Email</label>
-            <input type="text" name='email' id='email' onChange={inputChange} />
-            {error.email && <p>Email is invalid</p>}
-          </div>
 
-          <div className='auth-form-field'>
-            <label htmlFor="password">Password</label>
-            <input type="password" name='password' id='password' onChange={inputChange} />
-            {error.password && <p>Password must be longer than 4 characters</p>}
-          </div>
-          <div className="auth-form-button-field">
-            <button type='button' className={`${loading ? "auth-loading" : ""}`} onClick={loginSubmit}>
-              {
-                loading ? "logging..." : "login"
-              }
-            </button>
-          </div>
-          <div className='auth-signup-link-field'>
-            <p>Don't have an account? 
-              <span onClick={() => navigate('/register')}>Sign Up</span>
-            </p>
-          </div>
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'Enter') {
+        loginSubmit()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [loginSubmit])
+
+
+  return (
+    <div className="auth-bg-container bg-neutral-950">
+      <div className="auth-form-container border border-neutral-500 p-4">
+        <div className="flex flex-col justify-center items-center w-full mb-6">
+          <h1 className="header font-extrabold">Skill Swap</h1>
         </div>
+
+        <div className="input-group">
+          <div className="input-field bg-neutral-800 border border-neutral-600 rounded-xs">
+            <label htmlFor="email" className={`text-neutral-400 ${form.email ? 'input-placeholder-active' : 'input-placeholder'}`}>Email</label>
+            <input  type="text" 
+                    name="email" 
+                    id="email"
+                    className={`${form.email && 'input-active'}`}
+                    onChange={inputChange} 
+                    onBlur={handleOnBlurError} />
+          </div>
+          {error.email && <p className="text-red-400 text-xs mb-4">Email is invalid</p>}
+        </div>
+        
+        <div className="input-group">
+          <div className="input-field bg-neutral-800 border border-neutral-600 rounded-xs">
+            <label htmlFor="password" className={`text-neutral-400 ${form.password ? 'input-placeholder-active' : 'input-placeholder'}`}>Password</label>
+            <input  type="password" 
+                    name="password" 
+                    id="password"
+                    className={`${form.password && 'input-active'}`}
+                    onChange={inputChange}
+                    onBlur={handleOnBlurError} />
+          </div>
+          {error.password && <p className="text-red-400 text-xs mb-4">Password must be longer than 4 characters</p>}
+        </div>
+        
+        <button type='button' 
+                className={`${loading ? "bg-purple-950" : "bg-blue-900"} font-bold`} 
+                onClick={loginSubmit}>
+          {loading ? "Logging..." : "Log in"}
+        </button>
       </div>
-    </>
+      <div className='min-w-[100px] w-[300px] max-w-[400px] border border-neutral-500 p-4 text-center'>
+        <p className="text-sm">Don't have an account? 
+          <span className="text-sm ms-2 text-blue-800 font-bold cursor-pointer" onClick={() => navigate("/register")}>
+            Sign Up
+          </span>
+        </p>
+      </div>
+    </div>
   )
 }
 

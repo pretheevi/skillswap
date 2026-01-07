@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import API from "../axios/axios";
-
 import './authentication.css';
+
 function Register() {
   const navigate = useNavigate();
   const [form, setFrom] = useState({
@@ -52,11 +52,11 @@ function Register() {
     try{
       setLoading(true);
       if(!validateForm(form)) {
-        throw new Error('invalid inputs');
+        throw new Error("invalid inputs");
       }
-      const response = await API.post('/register', form);
+      const response = await API.post("/register", form);
       if(response.status === 201) {
-        navigate('/login');
+        navigate("/login");
       }
       console.log(response);
       setLoading(false);
@@ -65,46 +65,96 @@ function Register() {
       setLoading(false);
     }
   }
+
+  const handleOnBlurError = (event) => {
+    if(event.target.value.length === 0) {
+      setError(prev => ({...prev, [event.target.name]: true}));
+    }
+  }
+
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'Enter') {
+        loginSubmit()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [loginSubmit])
+
   return (
-    <>
-      <div className="auth-bg-container">
-        <div className="auth-content-card">
-          <h1 className='auth-heading'>Sign up</h1>
-          <div className='auth-form-field'>
-            <label htmlFor="name">Name</label>
-            <input type="text" name='name' id='name' onChange={inputChange} />
-            {error.name && <p>Name must be longer than 3 characters</p>}
-          </div>
-          <div className='auth-form-field'>
-            <label htmlFor="email">Email</label>
-            <input type="text" name='email' id='email'  onChange={inputChange} />
-            {error.email && <p>Email is invalid</p>}
-          </div>
-          <div className='auth-form-field'>
-            <label htmlFor="password">Password</label>
-            <input type="password" name='password' id='password'  onChange={inputChange} />
-            {error.password && <p>Password must be longer than 4 characters</p>}
-          </div>
-          <div className='auth-form-field'>
-            <label htmlFor="confirmPassword">Comfirm Password</label>
-            <input type="password" name='confirmPassword' id='confirmPassword'  onChange={inputChange} />
-            {error.confirmPassword && <p>confirm password not matching</p>}
-          </div>
-          <div className='auth-form-button-field'>
-            <button type='button' className={`${loading ? "auth-loading" : ""}`} onClick={loginSubmit}>
-              {
-                loading ? "signing up..." : "sign up"
-              }
-            </button>
-          </div>
-          <div className='auth-signup-link-field'>
-            <p>Already have a account? 
-              <span onClick={() => navigate('/')}>login</span>
-            </p>
-          </div>
-        </div>
+  <div className="auth-bg-container bg-neutral-950">
+    <div className="auth-form-container border border-neutral-500 p-4">
+      <div className="flex flex-col justify-center items-center w-full mb-6">
+        <h1 className="header font-extrabold">Skill Swap</h1>
+        <p className="text-center text-neutral-400 font-semibold">Sign up to see skill photos and videos from your friends.</p>
       </div>
-    </>
+
+      
+      <div className="input-group">
+        <div className="input-field bg-neutral-800 border border-neutral-600 rounded-xs">
+          <label htmlFor="name" className={`text-neutral-400 ${form.name ? 'input-placeholder-active' : 'input-placeholder'}`}>Name</label>
+          <input  type="text" 
+                  name='name' 
+                  id='name' 
+                  className={`${form.name && 'input-active'}`}
+                  onChange={inputChange}
+                  onBlur={handleOnBlurError} />
+        </div>
+        {error.name && <p className="text-red-400 text-xs mb-4">Name must be longer than 3 letters</p>}
+      </div>
+      
+      <div className="input-group">
+        <div className="input-field bg-neutral-800 border border-neutral-600 rounded-xs">
+          <label htmlFor="email" className={`text-neutral-400 ${form.email ? 'input-placeholder-active' : 'input-placeholder'}`}>Email</label>
+          <input  type="text" 
+                  name="email" 
+                  id="email"
+                  className={`${form.email && 'input-active'}`}
+                  onChange={inputChange}
+                  onBlur={handleOnBlurError}  />
+        </div>
+        {error.email && <p className="text-red-400 text-xs mb-4">Email is invalid</p>}
+      </div>
+      
+      <div className="input-group">
+        <div className="input-field bg-neutral-800 border border-neutral-600 rounded-xs">
+          <label htmlFor="password" className={`text-neutral-400 ${form.password ? 'input-placeholder-active' : 'input-placeholder'}`}>Password</label>
+          <input  type="password" 
+                  name="password"
+                  id="password" 
+                  className={`${form.password && 'input-active'}`}
+                  onChange={inputChange}
+                  onBlur={handleOnBlurError}  />
+        </div>
+        {error.password && <p className="text-red-400 text-xs mb-4">Password must be longer than 4 characters</p>}
+      </div>
+      
+      <div className="input-group">
+        <div className="input-field bg-neutral-800 border border-neutral-600 rounded-xs">
+          <label htmlFor="confirmPassword" className={`text-neutral-400 ${form.confirmPassword ? 'input-placeholder-active' : 'input-placeholder'}`}>Confirm Password</label>
+          <input  type="password" 
+                  name="confirmPassword" 
+                  id="confirmPassword" 
+                  className={`${form.confirmPassword && 'input-active'}`}
+                  onChange={inputChange}
+                  onBlur={handleOnBlurError}  />
+        </div>
+        {error.confirmPassword && <p className="text-red-400 text-xs mb-4">Confirm password not matching</p>}
+      </div>
+      <button type='button' className={`${loading ? "btn-outline bg-purple-950" : "bg-blue-900"}`} onClick={loginSubmit}>
+          {loading ? "Signing up..." : "Sign up"}
+      </button>
+    </div>
+    <div className='min-w-[100px] w-[300px] max-w-[400px] border border-neutral-500 p-4 text-center'>
+        <p className="text-sm">Have an account?</p>
+        <p className="text-sm ms-2 text-blue-800 font-bold cursor-pointer" onClick={() => navigate("/login")}>Log in</p>
+      </div>
+  </div>
   );
 }
 

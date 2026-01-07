@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "https://skillswapserver-dyws.onrender.com/api",
+  baseURL:"https://skillswapserver-dyws.onrender.com/api",
 });
 
 // Add token automatically if exists
@@ -15,4 +15,4 @@ API.interceptors.request.use((config) => {
 
 export default API;
 
-// "http://localhost:8080/api",
+// "http://localhost:8080/api", "https://skillswapserver-dyws.onrender.com/api"
