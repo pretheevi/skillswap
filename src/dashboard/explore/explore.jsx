@@ -78,7 +78,7 @@ export default function Explore() {
 
   // Navigate to user profile
   const navigateToProfile = (userId) => {
-    navigate(`/profile/${userId}`);
+    navigate(`/profileView`, {state: {user_id: userId}});
   };
 
   return (
@@ -114,7 +114,7 @@ export default function Explore() {
                     <div className='flex items-center justify-between'>
                       <div className='flex items-center gap-3'>
                         <img 
-                          src={user.avatar ? `http://localhost:8080${user.avatar}` : '/default-avatar.png'} 
+                          src={user.avatar ? user.avatar : '/default-avatar.png'} 
                           alt={user.name}
                           className='w-10 h-10 rounded-full object-cover border border-neutral-700'
                           onError={(e) => {

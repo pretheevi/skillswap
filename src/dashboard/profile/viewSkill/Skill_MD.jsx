@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom';
 import API from '../../../axios/axios';
-import axios from 'axios';
+import { toast } from 'sonner';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faXmark, faChevronLeft, faEllipsisV } from '@fortawesome/free-solid-svg-icons';
+import { faXmark, faChevronLeft, faEllipsisV, faUser, faU } from '@fortawesome/free-solid-svg-icons';
 import { faHeart, faComment } from '@fortawesome/free-regular-svg-icons';
 
 function Skill_MD(props) {
@@ -18,36 +18,23 @@ function Skill_MD(props) {
   const [avatarCache, setAvatarCache] = useState({});
   const [loading, setLoading] = useState(false);
   const [editPost, setEditPost] = useState(false);
+  const [deletingPost, setDeletingPost] = useState(false);
+  const isDeletingRef = useRef(false);
 
-  const getImage = async (media_url) => {
-    const response = await axios.get(`http://localhost:8080${media_url}`, { responseType: 'blob' });
-    const imageBlob = response.data;
-    const imageObjectURL = URL.createObjectURL(imageBlob);
-    return imageObjectURL;
-  }
-
-  const fetchUser = async () => {
-    const response = await API.get('profile');
-    const avatarUrl = await getImage(response.data.avatar);
-    const data = {
-      name: response.data.name,
-      avatar: avatarUrl,
-    }
+  const fetchUser = async (user_id) => {
+    const response = await API.get(`/profileById/${user_id}`);
     console.log(response);
-    setUser(data);
+    setUser(response.data);
   }
 
   const fetchSkillById = async (skill_id) => {
     try {
       const response = await API.get(`/skills/${skill_id}`);
       const data = response.data
+      await  fetchUser(data.user_id);
       console.log(data)
       setSkill(data || {});
       setMedia(data.media || {});
-      const skillImageUrl = await getImage(data.media.media_url);
-      const userAvatar = await getImage(data.media_url);
-      setImage(skillImageUrl)
-      setAvatar(userAvatar);
     } catch (error) {
       console.log(error)
     }
@@ -95,6 +82,7 @@ function Skill_MD(props) {
           };
         })
       );
+      console.log(commentsWithAvatars)
       setComments(commentsWithAvatars);
       setLoading(false);
     } catch (error) {
@@ -107,9 +95,9 @@ function Skill_MD(props) {
 
   useEffect(() => {
     if (!skill_id) return;
-    fetchUser();
     fetchSkillById(skill_id);
     fetchComments(skill_id);
+    console.log(JSON.parse(localStorage.getItem('user')))
   }, []);
 
   const submitNewComment = async () => {
@@ -127,6 +115,30 @@ function Skill_MD(props) {
       console.error('Error submitting comment:', error);
     }
   }
+
+  const handleDelete = async () => {
+    // Check ref immediately (synchronous)
+    if (isDeletingRef.current) {
+      toast.info('Deletion already in progress...');
+      return;
+    }
+    
+    try {
+      isDeletingRef.current = true; // Set ref immediately
+      setDeletingPost(true); // Update state for UI
+      
+      toast.info('Deleting Skill post');
+      await props.deletePost(skill_id);
+      toast.success('Skill post deleted successfully');
+      
+    } catch(error) {
+      toast.error('Deleting skill post failed. Try again');
+    } finally {
+      // Always reset both
+      isDeletingRef.current = false;
+      setDeletingPost(false);
+    }
+  };
 
   const [expandDescription, setExpandDescription] = useState(false);
   const SKILL_MAX_DESCRIPTION = 20;
@@ -153,16 +165,20 @@ function Skill_MD(props) {
    
     <div className='flex justify-center items-center bg-neutral-950 text-white w-full h-screen'>
       <div className='relative flex flex-col justify-center items-center border border-neutral-800 w-1/2 h-screen'>
-        <FontAwesomeIcon icon={faChevronLeft} className='absolute top-0 left-0 text-2xl m-4' onClick={() => props.setShowSkill(false)} />
-        {image && <img src={image} alt='skill image' />}
+        <FontAwesomeIcon icon={faChevronLeft} className='absolute top-0 left-0 text-2xl cursor-pointer m-4' onClick={() => props.setShowSkill(false)} />
+        {media && <img src={media.media_url} alt='skill image' />}
       </div>
       <div className='relative flex flex-col justify-center items-center border border-neutral-800 w-1/2 h-screen'>
         <header className='sticky top-0 left-0 w-full border border-neutral-800 p-4'>
           <div className='flex justify-start items-center gap-4'>
-            {image.avatar && <img src={user.avatar} alt="pro-pic" className='w-20 h-20 rounded-full' />}
+            {user.avatar
+             ? (<img src={user.avatar} alt="pro-pic" className='w-20 h-20 rounded-full' />)
+             : (<div className='flex justify-center items-center rounded-full text-2xl bg-neutral-500 w-12 h-10'>
+                  <FontAwesomeIcon icon={faUser} />
+                </div>)}
             <div className='flex justify-between items-center w-full'>
               <h1>{user.name}</h1>
-              {props.profilePost && <FontAwesomeIcon icon={faEllipsisV} onClick={() => setEditPost(true)} />}
+              {props.profilePost && skill.user_id === JSON.parse(localStorage.getItem('user')).id && <FontAwesomeIcon icon={faEllipsisV} onClick={() => setEditPost(true)} className='cursor-pointer' />}
             </div>
           </div>
           <div className='wrap-break-word mt-4'>
@@ -191,6 +207,7 @@ function Skill_MD(props) {
               return (
                 <div key={comment.id} className='comment-item flex gap-4 mb-6'>
                   <div className="flex-none">
+                    {comment.avatarUrl ? (
                     <img
                       src={comment.avatarUrl || '/default-avatar.png'}
                       className="w-10 h-10 rounded-full object-cover border border-neutral-700"
@@ -199,6 +216,12 @@ function Skill_MD(props) {
                         e.target.src = '/default-avatar.png';
                       }}
                     />
+                    ) : (
+                      <div className='flex justify-center items-center rounded-full text-2xl bg-neutral-500 w-10 h-10'>
+                        <FontAwesomeIcon icon={faUser} />
+                      </div>
+                    )}
+
                   </div>
 
                   <div className='flex-1 min-w-0'>
@@ -258,7 +281,9 @@ function Skill_MD(props) {
 
      {props.profilePost && editPost && <div className='profile-edit-bg'>
         <div className='profile-edit-container bg-neutral-800 w-lg h-96 rounded-2xl'>
-          <p className='text-red-400 font-bold hover:bg-neutral-700' onClick={() => deletePost(skill_id)}>Delete Skill</p>
+          <p className='text-red-400 font-bold hover:bg-neutral-700' onClick={handleDelete}>
+            {deletingPost ? 'Deleting...' : 'Delete Skill'}
+          </p>
           <p
             className='hover:bg-neutral-700'
             onClick={() => navigate('/createPost', { state: { skill_id } })}

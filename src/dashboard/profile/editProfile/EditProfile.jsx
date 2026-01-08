@@ -8,18 +8,9 @@ import { faXmark } from "@fortawesome/free-solid-svg-icons";
 
 function EditProfile(props) {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: "", bio: "", avatar: null });
-  const [preview, setPreview] = useState("");
+  const [form, setForm] = useState({ name: "", avatar: null, bio: "", remove_avatar: false });
   const [user, setUser] = useState({ name: "", avatar:"", bio:"" });
   const [loading, setLoading] = useState(false);
-
-  const getImage = async (media_url) => {
-    const response = await axios.get(`http://localhost:8080${media_url}`, { responseType: 'blob' });
-    const imageBlob = response.data;
-    const imageObjectURL = URL.createObjectURL(imageBlob);
-    setPreview(imageObjectURL || null);
-  }
-
 
   const getProfileInfo = async () => {
     try {
@@ -32,16 +23,12 @@ function EditProfile(props) {
       setForm({
         name: data.name || "",
         bio: data.bio || "",
-        avatar: null // Don't set file object from fetched data
+        avatar: null, // Don't set file object from fetched data
+        remove_avatar: false // Reset remove flag
       });
       
       // Set user state
       setUser({name: data.name, avatar: data.avatar, bio: data.bio});
-      
-      // Set preview image if avatar exists
-      if (data.avatar) {
-        getImage(data.avatar);
-      }
     } catch(error) {
       console.log(error);
       toast.error('Failed to load profile');
@@ -59,6 +46,12 @@ function EditProfile(props) {
       formData.append('name', form.name);
       formData.append('bio', form.bio);
       
+      // Check if we need to remove avatar
+      if (form.remove_avatar) {
+        formData.append('remove_avatar', 'true');
+      }
+      
+      // Check if new file is uploaded
       if (form.avatar) {
         formData.append('avatar', form.avatar);
       }
@@ -66,12 +59,24 @@ function EditProfile(props) {
       console.log('Submitting form data:', {
         name: form.name,
         bio: form.bio,
-        avatar: form.avatar?.name
+        avatar: form.avatar?.name,
+        remove_avatar: form.remove_avatar
       });
 
       const response = await API.post('/profile', formData);
       console.log('Update response:', response);
 
+      // Update local state after successful update
+      setUser(prev => ({
+        ...prev,
+        name: form.name,
+        bio: form.bio,
+        avatar: form.remove_avatar ? "" : (response.data.user?.avatar || prev.avatar)
+      }));
+      
+      // Reset remove_avatar flag
+      setForm(prev => ({ ...prev, remove_avatar: false }));
+      
       toast.success('Profile updated!');
       navigate('/profile')
     } catch (error) {
@@ -80,6 +85,19 @@ function EditProfile(props) {
     } finally {
       setLoading(false);
     }
+  }
+
+  const removeProfilePic = async () => {
+    // Set remove_avatar flag to true
+    setForm(prev => ({ ...prev, remove_avatar: true }));
+    
+    // Clear any selected file
+    setForm(prev => ({ ...prev, avatar: null }));
+    
+    // Show immediate visual feedback
+    setUser(prev => ({ ...prev, avatar: "" }));
+    
+    toast.success('Profile picture will be removed when you save changes');
   }
 
   const handleInputChange = (event) => {
@@ -96,9 +114,28 @@ function EditProfile(props) {
          return;
       }
 
-      setForm(prev => ({ ...prev, avatar: file }));
-      setPreview(URL.createObjectURL(file));
+      // When uploading new file, clear remove_avatar flag
+      setForm(prev => ({ ...prev, avatar: file, remove_avatar: false }));
+      
+      // Update preview immediately
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setUser(prev => ({ ...prev, avatar: e.target.result }));
+      };
+      reader.readAsDataURL(file);
     }
+  };
+
+  // Determine which avatar to show in preview
+  const getAvatarPreview = () => {
+    if (form.remove_avatar) {
+      return ""; // Show default avatar when remove is clicked
+    }
+    if (form.avatar) {
+      // If new file selected, use its preview
+      return user.avatar; // This is updated by FileReader in handleFileChange
+    }
+    return user.avatar; // Otherwise show current avatar
   };
 
   useEffect(() => {
@@ -113,6 +150,8 @@ function EditProfile(props) {
     );
   }
 
+  const avatarPreview = getAvatarPreview();
+
   return (
     <div className='flex justify-center items-center bg-neutral-950 w-full min-h-screen p-4 z-50'>
       <div className='w-full max-w-md bg-neutral-900 text-white border border-neutral-700 rounded-xl shadow-lg p-6'>
@@ -124,9 +163,9 @@ function EditProfile(props) {
           {/* Avatar Upload */}
           <div className='flex flex-col items-center'>
             <div className='mb-4'>
-              {preview ? (
+              {avatarPreview ? (
                 <img 
-                  src={preview} 
+                  src={avatarPreview} 
                   alt="Preview" 
                   className='w-24 h-24 rounded-full object-cover border-2 border-gray-200'
                 />
@@ -137,17 +176,33 @@ function EditProfile(props) {
               )}
             </div>
             
-            <label className='cursor-pointer'>
-              <span className='px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm'>
-                {preview && preview.includes('blob:') ? 'Change Photo' : 'Upload Photo'}
-              </span>
-              <input
-                type="file"
-                accept="image/*"
-                className='hidden'
-                onChange={handleFileChange}
-              />
-            </label>
+            <div className='flex justify-center items-center gap-2'>
+              <label className='cursor-pointer mb-2'>
+                <span className='px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm'>
+                  {user.avatar && !form.remove_avatar && !form.avatar ? 'Change Photo' : 'Upload Photo'}
+                </span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className='hidden'
+                  onChange={handleFileChange}
+                />
+              </label>
+            
+              {/* Remove Profile Pic Button - Added here */}
+              {user.avatar && !form.remove_avatar && !form.avatar && (
+                <button
+                  type="button"
+                  onClick={removeProfilePic}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm mb-2"
+                  disabled={loading}
+                >
+                  Remove Profile Pic
+                </button>
+              )}
+            </div>
+
+            
             <p className='text-xs text-gray-500 mt-2'>JPG, PNG up to 5MB</p>
           </div>
 

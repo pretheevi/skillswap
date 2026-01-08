@@ -32,24 +32,13 @@ function ProfileView() {
   const [currentTab, setCurrentTab] = useState('followers');
   const [followLoading, setFollowLoading] = useState(false);
 
-  const getImage = async (media_url) => {
-    const response = await axios.get(`http://localhost:8080${media_url}`, { responseType: 'blob' });
-    const imageBlob = response.data;
-    const imageObjectURL = URL.createObjectURL(imageBlob);
-    setImage(imageObjectURL || null);
-  }
 
   const getProfileInfo = async () => {
     try {
       const response = await API.get(`/profileById/${user_id}`);
       const data = response.data;
       console.log('Profile data:', data);
-      getImage(data.avatar);
-      setUser({
-        ...data,
-        is_following: data.is_following || false
-      });
-
+      setUser(data);
     } catch(error) {
       console.log(error);
     }
@@ -160,7 +149,6 @@ function ProfileView() {
     setFollowersList([]);
     setFollowingList([]);
     setPosts([]);
-    setImage(null);
 
     getProfileInfo();
     getAllPosts();
@@ -173,7 +161,7 @@ function ProfileView() {
         <div className='w-full md:w-md lg:w-lg xl:w-xl mx-auto'>
           <div className='profile-container'>
             <div className='profile-img-container'>
-              <img src={image || null} alt="profile-image" />
+              <img src={user.avatar || null} alt="profile-image" />
             </div>
             <div className='profile-info-container'>
               <h1>{user?.name}</h1>
@@ -284,7 +272,7 @@ function ProfileView() {
                       <div key={follower.id} className='flex justify-start items-center gap-4 mb-4 p-2 hover:bg-neutral-700 rounded-lg'>
                         <div>
                           <img 
-                            src={follower.avatar ? `http://localhost:8080${follower.avatar}` : '/default-avatar.png'} 
+                            src={follower.avatar ? follower.avatar : '/default-avatar.png'} 
                             alt="profile" 
                             className='w-10 h-10 rounded-full object-cover bg-neutral-600' 
                             onError={(e) => {
@@ -294,7 +282,7 @@ function ProfileView() {
                         </div>              
                         <div className='flex flex-1 justify-between items-center'>
                           <h1 className='cursor-pointer hover:underline' onClick={() => {
-                            if (followed.id === JSON.parse(localStorage.getItem('user')).id) return;
+                            if (follower.id === JSON.parse(localStorage.getItem('user')).id) return;
                             navigate('/profileView/', {
                               state: {user_id: follower.id}
                             });
@@ -331,7 +319,7 @@ function ProfileView() {
                       <div key={followed.id} className='flex justify-start items-center gap-4 mb-4 p-2 hover:bg-neutral-700 rounded-lg'>
                         <div>
                           <img 
-                            src={followed.avatar ? `http://localhost:8080${followed.avatar}` : '/default-avatar.png'} 
+                            src={followed.avatar ? followed.avatar : '/default-avatar.png'} 
                             alt="profile" 
                             className='w-10 h-10 rounded-full object-cover bg-neutral-600' 
                             onError={(e) => {

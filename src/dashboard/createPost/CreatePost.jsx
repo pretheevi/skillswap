@@ -12,10 +12,12 @@ function CreatePost() {
   const { state } = useLocation();
   const skill_id = state?.skill_id;
   const isEdit = Boolean(skill_id);
-  console.log('skill_id',skill_id, isEdit);
+  console.log('skill_id', skill_id, isEdit);
   const fileInputRef = useRef(null);
+  const [skill, setSkill] = useState({});
   const [previewImage, setPreviewImage] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null); // Add this state
+  const [originalImage, setOriginalImage] = useState(null); // Track original image URL
 
   const [form, setForm] = useState({
     title: '',
@@ -36,9 +38,8 @@ function CreatePost() {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Check file type
-    if (!file.type.includes('jpeg') && !file.type.includes('jpg')) {
-      toast.error('Please upload only JPEG/JPG images');
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      toast.error('Only JPG, PNG, WEBP allowed');
       return;
     }
 
@@ -49,7 +50,7 @@ function CreatePost() {
     }
 
     // Store the file object
-    setSelectedFile(file); // Add this
+    setSelectedFile(file);
 
     // Create preview
     const reader = new FileReader();
@@ -72,8 +73,8 @@ function CreatePost() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validation
-    if (!previewImage) {
+    // Validation for create mode
+    if (!isEdit && !selectedFile) {
       toast.error('Please upload an image');
       return;
     }
@@ -93,22 +94,22 @@ function CreatePost() {
       return;
     }
 
-    const toastId = toast.loading('Creating your skill post...');
+    const toastId = toast.loading(isEdit ? 'Updating your skill...' : 'Creating your skill post...');
 
     try {
       const formData = new FormData();
       
-      // For edit mode: only append media if a new file is selected
-      // For create mode: always append media (it's required)
-      if (isEdit && selectedFile) {
+      // Append media based on different scenarios
+      if (selectedFile) {
+        // New file selected (both create and edit)
         formData.append('media', selectedFile);
-      } else if (!isEdit) {
-        if (!selectedFile) {
-          toast.error('Please upload an image', { id: toastId });
-          return;
-        }
-        formData.append('media', selectedFile);
+      } else if (isEdit && !previewImage) {
+        // Edit mode: preview is null means image was removed
+        // We need to send a flag or handle it differently based on your backend
+        // This assumes backend can handle empty media for removal
+        formData.append('media', ''); // Or handle differently based on your API
       }
+      // If isEdit and no selectedFile but previewImage exists, keep original image
       
       // Always append form data
       formData.append('title', form.title);
@@ -119,17 +120,28 @@ function CreatePost() {
       console.log('Sending form data:', {
         isEdit,
         hasNewImage: !!selectedFile,
+        hasPreview: !!previewImage,
         title: form.title
       });
 
-      console.log(selectedFile);
-      const response = isEdit
-        ? await API.put(`/skills/${skill_id}`, formData)
-        : await API.post('/skills', formData);
+      let response;
+      if (isEdit) {
+        // For PUT request, we need to handle FormData differently
+        // Some backends expect multipart/form-data for PUT
+        response = await API.put(`/skills/${skill_id}`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+      } else {
+        response = await API.post('/skills', formData);
+      }
 
       console.log('Response:', response);
       
-      toast.success('Skill created successfully!', { id: toastId });
+      toast.success(isEdit ? 'Skill updated successfully!' : 'Skill created successfully!', {
+        id: toastId
+      });
       setTimeout(() => navigate('/home'), 1000);
       
     } catch (err) {
@@ -146,17 +158,11 @@ function CreatePost() {
     }
   };
 
-
-  const getImage = async (media_url) => {
-    const response = await axios.get(`http://localhost:8080${media_url}`, { responseType: 'blob' });
-    return response.data
-  }
-
   const fetchSkillById = async (skill_id) => {
     try {
       const response = await API.get(`/skills/${skill_id}`);
       const data = response.data
-      console.log(data)
+      console.log('Fetched skill data:', data)
       setForm({
         title: data.title,
         category: data.category,
@@ -164,24 +170,21 @@ function CreatePost() {
         description: data.description
       })
 
-      const blob = await getImage(data.media_url);
-      const file = new File([blob], 'existing-image.jpg', {
-        type: blob.type,
-      });
-
-      setSelectedFile(file);
-      setPreviewImage(URL.createObjectURL(blob));
-    } catch(error) {
+      if (data.media?.media_url) {
+        setPreviewImage(data.media.media_url);
+        setOriginalImage(data.media.media_url); // Store original image URL
+      }
+      setSkill(data);
+    } catch (error) {
       console.log(error)
     }
   }
-  useEffect(() => { 
-    if(isEdit) {
-      fetchSkillById(skill_id)
-    } else {
 
+  useEffect(() => { 
+    if (isEdit) {
+      fetchSkillById(skill_id)
     }
-  }, [])
+  }, [isEdit, skill_id])
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -206,12 +209,12 @@ function CreatePost() {
           >
             <FontAwesomeIcon icon={faArrowLeft} className="text-xl" />
           </button>
-          <h1 className='text-lg font-semibold'>Create New Post</h1>
+          <h1 className='text-lg font-semibold'>{isEdit ? 'Edit Post' : 'Create New Post'}</h1>
           <button 
             className='px-4 py-2 rounded-lg font-medium bg-indigo-600 hover:bg-indigo-700 transition'
             onClick={handleSubmit}
           >
-            Share
+            {isEdit ? 'Update' : 'Share'}
           </button>
         </div>
 
@@ -242,7 +245,7 @@ function CreatePost() {
                   <div className='bg-neutral-800 p-6 rounded-full mb-4'>
                     <FontAwesomeIcon icon={faPlus} className="text-4xl text-neutral-400" />
                   </div>
-                  <p className='text-lg font-medium mb-2'>Upload your image</p>
+                  <p className='text-lg font-medium mb-2'>{isEdit ? 'Change image' : 'Upload your image'}</p>
                   <p className='text-neutral-400 text-sm mb-4'>JPEG only • Max 5MB</p>
                   <button className='px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-medium transition'>
                     Select from device
@@ -252,12 +255,17 @@ function CreatePost() {
                     ref={fileInputRef} 
                     name="media"
                     onChange={handleImageUpload} 
-                    accept=".jpg,.jpeg,image/jpeg" 
+                    accept="image/jpeg,image/png,image/webp"
                     className='hidden' 
                   />
                 </div>
               )}
             </div>
+            {isEdit && originalImage && !selectedFile && previewImage && (
+              <p className='text-xs text-neutral-400 mt-2 text-center'>
+                Using existing image. Upload a new file to change it.
+              </p>
+            )}
           </div>
 
           {/* Form Details Section */}

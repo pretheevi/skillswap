@@ -17,13 +17,6 @@ function Skill_SM(props) {
   const [openComments, setOpenComments] = useState(false);
   const [editPost, setEditPost] = useState(false);
 
-  const getSkillImage = async (media_url) => {
-    const response = await axios.get(`http://localhost:8080${media_url}`, { responseType: 'blob' });
-    const imageBlob = response.data;
-    const imageObjectURL = URL.createObjectURL(imageBlob);
-    return imageObjectURL;
-  }
-
   const fetchSkillById = async (skill_id) => {
     try {
       const response = await API.get(`/skills/${skill_id}`);
@@ -31,8 +24,7 @@ function Skill_SM(props) {
       console.log(data)
       setSkill(data || {});
       setMedia(data.media || {});
-      const imageObjectURL = await getSkillImage(data.media.media_url);
-      setImage(imageObjectURL)
+      console.log(data)
     } catch (error) {
       console.log(error)
     }
@@ -59,7 +51,7 @@ function Skill_SM(props) {
         </header>
         <main className='max-h-1/2 overflow-hidden'>
           <div className='flex justify-center items-center w-full h-full object-contain'>
-            {image && <img src={image} alt="skill image" className='object-contain' />}
+            {media && <img src={media.media_url} alt="skill image" className='object-contain' />}
           </div>
         </main>
         <footer className='p-4'>

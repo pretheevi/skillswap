@@ -6,66 +6,32 @@ import './postCard.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHeart, faXmark, faArrowLeft, faChevronLeft, faEllipsisV } from "@fortawesome/free-solid-svg-icons";
 import { faHeart as faHeartRegular, faComment } from "@fortawesome/free-regular-svg-icons";
-
 import Skill_SM from '../profile/viewSkill/Skill_SM';
+import Commnent_SM from '../profile/viewSkill/Comments_SM';
 import Skill_MD from '../profile/viewSkill/Skill_MD';
 
 const PostCard = ({ post, profilePost, deletePost }) => {
-  const navigate = useNavigate();
-  const [image, setImage] = useState(null);
-  const [profileImage, setProfileImage] = useState(null);
-  const [showComments, setShowComments] = useState(false);
-  const { user_id, user_name, user_email, user_avatar, skill_id, skill_title, skill_description, skill_level, skill_category, media, rating, comment_count } = post;
-  const [comments, setComments] = useState([]);
-  const [commentLoading, setCommentLoading] = useState(false);
-  const [postCancel, setPostCancel] = useState(false);
-
-  const getSkillImage = async (media_url) => {
-    const response = await axios.get(`http://localhost:8080${media_url}`, { responseType: 'blob' });
-    const imageBlob = response.data;
-    const imageObjectURL = URL.createObjectURL(imageBlob);
-    setImage(imageObjectURL);
-  }
-
-  const getProfileImage = async (media_url) => {
-    const response = await axios.get(`http://localhost:8080${media_url}`, { responseType: 'blob' });
-    const imageBlob = response.data;
-    const imageObjectURL = URL.createObjectURL(imageBlob);
-    return imageObjectURL;
-  }
-
-  useEffect(() => {
-    if (!profilePost) {
-      const fetchAuthorAvatar = async () => {
-        const postAvatar = await getProfileImage(user_avatar);
-        setProfileImage(postAvatar);
-      }
-      fetchAuthorAvatar();
-    }
-    getSkillImage(media[0].media_url);
-  }, [])
-
-
-  const fetchComments = async () => {
-    try {
-      setCommentLoading(true);
-      const response = await API.get(`/comments/${skill_id}`);
-      setCommentLoading(false);
-      setComments(response.data);
-      console.log(skill_id)
-    } catch (error) {
-      setCommentLoading(false);
-      console.error('Error fetching comments:', error);
-    }
-  }
-
+  const [showSkillDetail, setShowSkillDetail] = useState(false);
+   const [openComments, setOpenComments] = useState(false);
+  const { 
+      user_id, 
+      user_name, 
+      user_email,
+      user_avatar, 
+      skill_id, 
+      skill_title,
+      skill_description, 
+      skill_level, 
+      skill_category, 
+      media, 
+      rating, 
+      comment_count
+     } = post;
 
   const toggleShowComments = () => {
-    if (showComments === false) {
-      fetchComments();
-      setShowComments(true);
-    } else {
-      setShowComments(false);
+    if(!profilePost) {
+      setOpenComments(true);
+      setShowSkillDetail(true);
     }
   }
 
@@ -83,21 +49,21 @@ const PostCard = ({ post, profilePost, deletePost }) => {
         className={`${profilePost ? 'border border-neutral-700' : 'w-full md:w-md lg:w-lg xl:w-xl mx-auto mb-6'}`}
         onClick={() => {
           if (profilePost) {
-            setShowComments(true);
+            setShowSkillDetail(true);
           }
         }}
       >
         <header className={`${profilePost ? '' : 'header-container ps-4'}`}>
-          <img src={profileImage} alt="prf-pic" className={`${profilePost ? 'hidden' : ''} flex-none`} />
+          <img src={user_avatar} alt="prf-pic" className={`${profilePost ? 'hidden' : ''} flex-none`} />
           <div className={`flex justify-between ${profilePost ? '' : ''} flex-1`}>
             <div className={`${profilePost ? '' : ''}`}>
               <p className={`${profilePost ? 'hidden' : ''}`}>{user_name}</p>
             </div>
           </div>
         </header>
-        {image && <div className={`post-image-container ${profilePost ? 'h-28 md:h-33 lg:h-40 xl:h-48 mb-2' : 'max-h-[850px]'}`}>
-          <img src={image} alt="post-media" />
-        </div>}
+        <div className={`post-image-container ${profilePost ? 'h-28 md:h-33 lg:h-40 xl:h-48 mb-2' : 'max-h-[850px]'}`}>
+          <img src={media[0].media_url} alt="post-media" />
+        </div>
         <div className='like-comment-container my-4'>
           <span className={`${profilePost ? '' : 'cursor-pointer'} text-white`}>
             <FontAwesomeIcon icon={faHeartRegular} />
@@ -122,12 +88,16 @@ const PostCard = ({ post, profilePost, deletePost }) => {
         </div>
       </article>
       
-      {showComments && <div className='fixed bg-neutral-950 top-0 left-0 z-50 w-full h-screen md:hidden'>
-          <Skill_SM skill_id={skill_id} setShowSkill={setShowComments} profilePost={profilePost} deletePost={deletePost} />
+      {profilePost && showSkillDetail && <div className='fixed bg-neutral-950 top-0 left-0 z-50 w-full h-screen md:hidden'>
+          <Skill_SM skill_id={skill_id} setShowSkill={setShowSkillDetail} profilePost={profilePost} deletePost={deletePost} />
       </div>}
+
+      {!profilePost && openComments && <div className='fixed bg-neutral-950 top-0 left-0 z-50 w-full h-screen md:hidden'>
+        <Commnent_SM skill_id={skill_id} setOpenComments={setOpenComments} />
+      </div> }
             
-      {showComments && <div className='Skill_MD fixed bg-neutral-950 top-0 left-0 z-50 w-full h-screen'>
-          <Skill_MD skill_id={skill_id} setShowSkill={setShowComments} profilePost={profilePost} deletePost={deletePost} />
+      {showSkillDetail && <div className='Skill_MD fixed bg-neutral-950 top-0 left-0 z-50 w-full h-screen'>
+          <Skill_MD skill_id={skill_id} setShowSkill={setShowSkillDetail} profilePost={profilePost} deletePost={deletePost} />
       </div>}
     </>
   );
