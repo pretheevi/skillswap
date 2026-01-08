@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL:"http://localhost:8080/api",
+  baseURL:"https://skillswapserver-dyws.onrender.com/api",
 });
 
 // Add token automatically if exists
