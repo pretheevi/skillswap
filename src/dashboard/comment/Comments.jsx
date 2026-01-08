@@ -96,6 +96,11 @@ function Comments(props) {
 
   // Fetch author avatar
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    if(!token) {
+      navigate('/');
+      return;
+    }
     const fetchAuthorAvatar = async () => {
       if (props.user_avatar) {
         const avatar = await fetchAvatar(props.user_avatar);
@@ -107,11 +112,21 @@ function Comments(props) {
   }, [props.profileImage]);
 
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    if(!token) {
+      navigate('/');
+      return;
+    }
     fetchComments();
   }, [props.skill_id]);
 
   // Cleanup object URLs when component unmounts
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    if(!token) {
+      navigate('/');
+      return;
+    }
     return () => {
       // Revoke all object URLs to prevent memory leaks
       Object.values(avatarCache).forEach(url => {

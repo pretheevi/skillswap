@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import {toast} from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import API from "../axios/axios";
 import './authentication.css';
@@ -63,6 +64,7 @@ function Register() {
     } catch(error) {
       console.log(error)
       setLoading(false);
+      toast.error(error.response.data.error);
     }
   }
 

@@ -70,6 +70,11 @@ function Commnent_SM(props) {
   }
 
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    if(!token) {
+      navigate('/');
+      return;
+    }
     if (!skillId) return;
     fetchComments(skillId);
   }, []);

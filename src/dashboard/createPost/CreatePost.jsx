@@ -181,6 +181,12 @@ function CreatePost() {
   }
 
   useEffect(() => { 
+    const token = localStorage.getItem('token');
+    if(!token) {
+      navigate('/');
+      return;
+    }
+
     if (isEdit) {
       fetchSkillById(skill_id)
     }

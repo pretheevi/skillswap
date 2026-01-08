@@ -94,6 +94,11 @@ function Skill_MD(props) {
 
 
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    if(!token) {
+      navigate('/');
+      return;
+    }
     if (!skill_id) return;
     fetchSkillById(skill_id);
     fetchComments(skill_id);

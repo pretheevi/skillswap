@@ -6,7 +6,10 @@ import "./navbar.css";
 
 function Navbar() {
   const navigate = useNavigate();
-
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/');
+  }
   return (<>
     {/* Desktop Navbar - hidden on mobile, visible on md and up */}
     <nav className="md-visible fixed bg-neutral-900 top-0 left-0 w-20 h-screen p-2 text-white z-20">
@@ -21,7 +24,7 @@ function Navbar() {
           <li className="text-xl cursor-pointer" onClick={() => navigate('/profile')}><FontAwesomeIcon icon={faUser} size="lg" /></li>
         </ul>
         <div className="flex flex-col justify-around items-center">
-          <p className="text-center my-4 cursor-pointer" onClick={() => navigate('/')}><FontAwesomeIcon icon={faDoorOpen} size="lg" /></p>
+          <p className="text-center my-4 cursor-pointer" onClick={handleLogout}><FontAwesomeIcon icon={faDoorOpen} size="lg" /></p>
         </div>
       </div>
     </nav>
@@ -33,7 +36,7 @@ function Navbar() {
         <li className="text-xl cursor-pointer" onClick={() => navigate('/explore')}><FontAwesomeIcon icon={faCompass} size="lg" /></li>
         <li className="text-xl cursor-pointer" onClick={() => navigate('/createpost')}><FontAwesomeIcon icon={faPlus} size="lg" /></li>
         <li className="text-xl cursor-pointer" onClick={() => navigate('/profile')}><FontAwesomeIcon icon={faUser} size="lg" /></li>
-        <li className="text-xl cursor-pointer" onClick={() => navigate('/')}><FontAwesomeIcon icon={faDoorOpen}/></li>
+        <li className="text-xl cursor-pointer" onClick={handleLogout}><FontAwesomeIcon icon={faDoorOpen}/></li>
       </ul>
     </nav>
   </>)

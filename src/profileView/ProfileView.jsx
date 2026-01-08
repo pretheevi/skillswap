@@ -143,6 +143,11 @@ function ProfileView() {
   };
 
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    if(!token) {
+      navigate('/');
+      return;
+    }
     if (!user_id) return;
 
     setFollowing(false);

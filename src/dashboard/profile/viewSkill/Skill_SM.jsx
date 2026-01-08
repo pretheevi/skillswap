@@ -34,6 +34,11 @@ function Skill_SM(props) {
 
 
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    if(!token) {
+      navigate('/');
+      return;
+    }
     fetchSkillById(skill_id);
   }, []);
 

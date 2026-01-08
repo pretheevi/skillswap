@@ -31,6 +31,11 @@ export default function Explore() {
 
   // Debounced search
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    if(!token) {
+      navigate('/');
+      return;
+    }
     const delayDebounceFn = setTimeout(() => {
       searchUsers(searchQuery);
     }, 500);

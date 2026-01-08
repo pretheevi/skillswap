@@ -35,6 +35,14 @@ const PostCard = ({ post, profilePost, deletePost }) => {
     }
   }
 
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if(!token) {
+      navigate('/');
+      return;
+    }
+  })
+
   const SKILL_MAX_DESCRIPTION = 80;
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   const isDescriptionLong = skill_description?.length > SKILL_MAX_DESCRIPTION;

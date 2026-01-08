@@ -207,6 +207,11 @@ function EditProfile(props) {
   };
 
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    if(!token) {
+      navigate('/');
+      return;
+    }
     getProfileInfo();
   }, []);
 
