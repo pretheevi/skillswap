@@ -11,6 +11,10 @@ function EditProfile(props) {
   const [form, setForm] = useState({ name: "", avatar: null, bio: "", remove_avatar: false });
   const [user, setUser] = useState({ name: "", avatar:"", bio:"" });
   const [loading, setLoading] = useState(false);
+  const [bioLength, setBioLength] = useState(0);
+
+  const MAX_NAME_LENGTH = 50;
+  const MAX_BIO_LENGTH = 100;
 
   const getProfileInfo = async () => {
     try {
@@ -29,6 +33,9 @@ function EditProfile(props) {
       
       // Set user state
       setUser({name: data.name, avatar: data.avatar, bio: data.bio});
+      
+      // Set initial bio length
+      setBioLength(data.bio?.length || 0);
     } catch(error) {
       console.log(error);
       toast.error('Failed to load profile');
@@ -37,9 +44,36 @@ function EditProfile(props) {
     }
   }
 
+  const validateForm = () => {
+    // Name validation
+    if (!form.name.trim()) {
+      toast.error('Please enter your name');
+      return false;
+    }
+    
+    if (form.name.length > MAX_NAME_LENGTH) {
+      toast.error(`Name must be less than ${MAX_NAME_LENGTH} characters`);
+      return false;
+    }
+    
+    // Bio validation
+    if (form.bio.length > MAX_BIO_LENGTH) {
+      toast.error(`Bio must be less than ${MAX_BIO_LENGTH} characters`);
+      return false;
+    }
+    
+    return true;
+  }
+
   const submitForm = async (event) => {
     try {
       event.preventDefault();
+      
+      // Validate form before submission
+      if (!validateForm()) {
+        return;
+      }
+      
       setLoading(true);
       
       const formData = new FormData();
@@ -102,6 +136,40 @@ function EditProfile(props) {
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
+    
+    // For bio field, check character limit
+    if (name === 'bio') {
+      const currentLength = value.length;
+      setBioLength(currentLength);
+      
+      // Don't allow typing beyond max length
+      if (currentLength > MAX_BIO_LENGTH) {
+        toast.error(`Bio cannot exceed ${MAX_BIO_LENGTH} characters`);
+        return; // Don't update the state
+      }
+      
+      // Warn when reaching limit
+      if (currentLength === MAX_BIO_LENGTH) {
+        toast.info('Maximum bio length reached');
+      }
+    }
+    
+    // For name field, check character limit
+    if (name === 'name') {
+      const currentLength = value.length;
+      
+      // Don't allow typing beyond max length
+      if (currentLength > MAX_NAME_LENGTH) {
+        toast.error(`Name cannot exceed ${MAX_NAME_LENGTH} characters`);
+        return; // Don't update the state
+      }
+      
+      // Warn when reaching limit
+      if (currentLength === MAX_NAME_LENGTH) {
+        toast.info('Maximum name length reached');
+      }
+    }
+    
     setForm(prev => ({ ...prev, [name]: value }));
   }
 
@@ -201,7 +269,6 @@ function EditProfile(props) {
                 </button>
               )}
             </div>
-
             
             <p className='text-xs text-gray-500 mt-2'>JPG, PNG up to 5MB</p>
           </div>
@@ -218,8 +285,12 @@ function EditProfile(props) {
               className='w-full p-3 bg-neutral-800 border border-neutral-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-white'
               onChange={handleInputChange}
               placeholder='Your name'
+              maxLength={MAX_NAME_LENGTH}
               required
             />
+            <div className='text-xs text-neutral-400 mt-1 text-right'>
+              {form.name.length}/{MAX_NAME_LENGTH}
+            </div>
           </div>
 
           {/* Bio Field */}
@@ -234,7 +305,13 @@ function EditProfile(props) {
               className='w-full p-3 bg-neutral-800 border border-neutral-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition resize-none text-white'
               onChange={handleInputChange}
               placeholder='Tell something about yourself...'
+              maxLength={MAX_BIO_LENGTH}
             />
+            <div className={`text-xs mt-1 text-right ${
+              bioLength > MAX_BIO_LENGTH ? 'text-red-400' : 'text-neutral-400'
+            }`}>
+              {bioLength}/{MAX_BIO_LENGTH}
+            </div>
           </div>
 
           {/* Buttons */}

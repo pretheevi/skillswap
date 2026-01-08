@@ -214,14 +214,8 @@ function ProfileView() {
             <div className='animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500'></div>
           </div>
         ) : posts.length === 0 ? (
-          <div className='text-center py-12 bg-neutral-900 max-w-1/2 mx-auto'>
-            <p className='text-neutral-400 text-lg'>No posts yet</p>
-            <button 
-              onClick={() => navigate('/createpost')}
-              className='mt-4 px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition-colors'
-            >
-              Create your first post
-            </button>
+          <div className='text-center py-12 bg-neutral-900 max-w-1/2 mx-auto mt-4'>
+            <p className='text-neutral-400 text-lg'>No posts uploaded</p>
           </div>
         ) : (
           <div className='profile-posts'>

@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import API from '../../../axios/axios';
-import axios from 'axios';
+import { toast } from 'sonner';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXmark, faEllipsisV } from '@fortawesome/free-solid-svg-icons';
 import { faHeart, faComment } from '@fortawesome/free-regular-svg-icons';
@@ -16,6 +16,8 @@ function Skill_SM(props) {
   const [expandDescription, setExpandDescription] = useState(false);
   const [openComments, setOpenComments] = useState(false);
   const [editPost, setEditPost] = useState(false);
+  const [deletingPost, setDeletingPost] = useState(false);
+  const isDeletingRef = useRef(false);
 
   const fetchSkillById = async (skill_id) => {
     try {
@@ -41,6 +43,30 @@ function Skill_SM(props) {
     setExpandDescription(prev => !prev)
   }
 
+
+  const handleDelete = async () => {
+      // Check ref immediately (synchronous)
+      if (isDeletingRef.current) {
+        toast.info('Deletion already in progress...');
+        return;
+      }
+      
+      try {
+        isDeletingRef.current = true; // Set ref immediately
+        setDeletingPost(true); // Update state for UI
+        
+        toast.info('Deleting Skill post');
+        await props.deletePost(skill_id);
+        toast.success('Skill post deleted successfully');
+        
+      } catch(error) {
+        toast.error('Deleting skill post failed. Try again');
+      } finally {
+        // Always reset both
+        isDeletingRef.current = false;
+        setDeletingPost(false);
+      }
+  };
 
   return (
     <>
@@ -91,7 +117,7 @@ function Skill_SM(props) {
 
       {props.profilePost && editPost && <div className='profile-edit-bg'>
         <div className='profile-edit-container bg-neutral-800 w-lg h-96 rounded-2xl'>
-          <p className='text-red-400 font-bold hover:bg-neutral-700' onClick={() => props.deletePost(skill_id)}>Delete Skill</p>
+          <p className='text-red-400 font-bold hover:bg-neutral-700' onClick={handleDelete}>Delete Skill</p>
           <p
             className='hover:bg-neutral-700'
             onClick={() => navigate('/createPost', { state: { skill_id } })}
