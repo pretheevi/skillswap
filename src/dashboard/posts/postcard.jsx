@@ -74,7 +74,7 @@ const PostCard = ({ post, profilePost, deletePost }) => {
             <p>{comment_count}</p>
           </span>
         </div>
-        <div className={`description-container ${profilePost ? 'hidden' : ''}`}>
+        {!profilePost && <div className={`description-container ${profilePost ? 'hidden' : ''}`}>
           <p>
             {descriptionExpanded || !isDescriptionLong
               ? skill_description
@@ -85,7 +85,7 @@ const PostCard = ({ post, profilePost, deletePost }) => {
               </span>
             )}
           </p>
-        </div>
+        </div>}
       </article>
       
       {profilePost && showSkillDetail && <div className='fixed bg-neutral-950 top-0 left-0 z-50 w-full h-screen md:hidden'>
